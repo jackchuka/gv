@@ -232,7 +232,7 @@ func (m *initModel) View() string {
 
 	case stepConfirm:
 		b.WriteString(styleInitTitle.Render("Ready to write config"))
-		b.WriteString(fmt.Sprintf(" with %d scan path(s):\n\n", len(m.paths)))
+		fmt.Fprintf(&b, " with %d scan path(s):\n\n", len(m.paths))
 		for _, p := range m.paths {
 			b.WriteString("  - " + p + "\n")
 		}
