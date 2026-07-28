@@ -11,6 +11,10 @@
 TUI dashboard for monitoring multiple git repositories and worktrees.
 Auto-discovers git repos under configured paths and shows their status in real-time.
 
+[![Test](https://github.com/jackchuka/gv/actions/workflows/test.yml/badge.svg)](https://github.com/jackchuka/gv/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/jackchuka/gv?sort=semver)](https://github.com/jackchuka/gv/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 <img src="./screenshot.png" alt="gv screenshot" width="800"></img>
 
 </div>
