@@ -289,3 +289,24 @@ func TestCheckSpecialStates(t *testing.T) {
 		}
 	})
 }
+
+func TestParseOwnerFromURL_LocalRemotes(t *testing.T) {
+	tests := []struct {
+		url      string
+		expected string
+	}{
+		{"/srv/git/acme/api.git", ""},
+		{"../remotes/api.git", ""},
+		{"./api.git", ""},
+		{"file:///srv/git/acme/api.git", ""},
+		{`C:\repos\api.git`, ""},
+		{"github.com:acme/api.git", "acme"},
+		{"ssh://git@example.com:2222/acme/api.git", "acme"},
+		{"https://github.com/api.git", ""},
+	}
+	for _, tt := range tests {
+		if got := parseOwnerFromURL(tt.url); got != tt.expected {
+			t.Errorf("parseOwnerFromURL(%q) = %q, want %q", tt.url, got, tt.expected)
+		}
+	}
+}

@@ -166,8 +166,32 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Help overlay — any key closes
+	// Help overlay — scroll keys scroll when it overflows, any other key closes
 	if m.showHelp {
+		if maxOff := m.helpMaxOffset(); maxOff > 0 {
+			off := min(m.helpOffset, maxOff)
+			half := max(m.helpBodyHeight()/2, 1)
+			switch {
+			case key.Matches(msg, m.keys.Down):
+				m.helpOffset = min(off+1, maxOff)
+				return m, nil
+			case key.Matches(msg, m.keys.Up):
+				m.helpOffset = max(off-1, 0)
+				return m, nil
+			case key.Matches(msg, m.keys.HalfDown):
+				m.helpOffset = min(off+half, maxOff)
+				return m, nil
+			case key.Matches(msg, m.keys.HalfUp):
+				m.helpOffset = max(off-half, 0)
+				return m, nil
+			case key.Matches(msg, m.keys.Top):
+				m.helpOffset = 0
+				return m, nil
+			case key.Matches(msg, m.keys.Bottom):
+				m.helpOffset = maxOff
+				return m, nil
+			}
+		}
 		m.showHelp = false
 		return m, nil
 	}
@@ -336,6 +360,7 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case key.Matches(msg, m.keys.Help):
 		m.showHelp = !m.showHelp
+		m.helpOffset = 0
 	}
 
 	return m, nil

@@ -38,7 +38,11 @@ func (w *Walker) Scan(ctx context.Context) ([]model.Repository, error) {
 
 			mu.Lock()
 			for _, r := range found {
-				// Deduplicate by path - scan paths may overlap
+				// Deduplicate by canonical path - scan paths may overlap or go through symlinks
+				r.Path = canonicalPath(r.Path)
+				if r.MainWorktree != "" {
+					r.MainWorktree = canonicalPath(r.MainWorktree)
+				}
 				if _, exists := seen[r.Path]; !exists {
 					seen[r.Path] = r
 				}
@@ -59,6 +63,7 @@ func (w *Walker) Scan(ctx context.Context) ([]model.Repository, error) {
 func (w *Walker) ScanPath(ctx context.Context, root string, maxDepth int) ([]model.Repository, error) {
 	var repos []model.Repository
 
+	root = canonicalPath(root)
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Skip directories we can't read
@@ -114,4 +119,13 @@ func (w *Walker) ScanPath(ctx context.Context, root string, maxDepth int) ([]mod
 	})
 
 	return repos, err
+}
+
+// canonicalPath resolves symlinks so the same directory reached through
+// different paths (e.g. /tmp and /private/tmp on macOS) compares equal.
+func canonicalPath(path string) string {
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		return resolved
+	}
+	return filepath.Clean(path)
 }
