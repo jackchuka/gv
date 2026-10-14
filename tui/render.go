@@ -758,20 +758,38 @@ func (m *Model) renderToasts() string {
 	return strings.Join(toastStrs, "\n")
 }
 
+// helpChrome is the number of help box lines that are not bindings:
+// border, padding, title, and hint.
+const helpChrome = 8
+
+func (m *Model) helpBodyHeight() int {
+	return max(m.height-lipgloss.Height(m.renderHeader())-helpChrome, 1)
+}
+
+func (m *Model) helpMaxOffset() int {
+	return max(len(m.keys.helpLines())-m.helpBodyHeight(), 0)
+}
+
 func (m *Model) renderHelp() string {
-	content := m.keys.helpText()
+	lines := m.keys.helpLines()
+	body := m.helpBodyHeight()
+	maxOff := m.helpMaxOffset()
+	off := min(m.helpOffset, maxOff)
+	visible := lines[off:min(off+body, len(lines))]
+
+	hint := "press any key to close"
+	if maxOff > 0 {
+		hint = fmt.Sprintf("j/k scroll (%d-%d of %d), other keys close", off+1, off+len(visible), len(lines))
+	}
 
 	box := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder()).
 		BorderForeground(colorCyan).
 		Padding(1, 2).
 		Width(50).
-		Render(styleTitle.Render("HELP") + "\n\n" + content + "\n\n" + styleDim.Render("press any key to close"))
+		Render(styleTitle.Render("HELP") + "\n\n" + strings.Join(visible, "\n") + "\n\n" + styleDim.Render(hint))
 
-	availH := m.height - 4
-	if availH < 10 {
-		availH = 10
-	}
+	availH := max(m.height-lipgloss.Height(m.renderHeader()), 1)
 	return lipgloss.Place(m.width, availH, lipgloss.Center, lipgloss.Center, box)
 }
 

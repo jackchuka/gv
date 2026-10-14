@@ -1,6 +1,10 @@
 package tui
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"strings"
+
+	"github.com/charmbracelet/bubbles/key"
+)
 
 type keyMap struct {
 	// Navigation
@@ -148,40 +152,40 @@ func newKeyMap() keyMap {
 	}
 }
 
-func (k keyMap) helpText() string {
+func (k keyMap) helpLines() []string {
 	format := func(b key.Binding) string {
 		h := b.Help()
 		return "  " + padRight(h.Key, 12) + h.Desc
 	}
 
-	return `Navigation
-` + format(k.Up) + `
-` + format(k.Down) + `
-` + format(k.Top) + `
-` + format(k.Bottom) + `
-` + format(k.HalfDown) + `
-` + format(k.HalfUp) + `
-` + format(k.Filter) + `
-` + format(k.Escape) + `
+	return strings.Split(`Navigation
+`+format(k.Up)+`
+`+format(k.Down)+`
+`+format(k.Top)+`
+`+format(k.Bottom)+`
+`+format(k.HalfDown)+`
+`+format(k.HalfUp)+`
+`+format(k.Filter)+`
+`+format(k.Escape)+`
 
 Actions
-` + format(k.Reload) + `
-` + format(k.Fetch) + `
-` + format(k.FetchAll) + `
-` + format(k.Editor) + `
-` + format(k.Open) + `
-` + format(k.CopyPath) + `
-` + format(k.Shell) + `
+`+format(k.Reload)+`
+`+format(k.Fetch)+`
+`+format(k.FetchAll)+`
+`+format(k.Editor)+`
+`+format(k.Open)+`
+`+format(k.CopyPath)+`
+`+format(k.Shell)+`
 
 Views & Sort
-` + format(k.ViewAll) + `
-` + format(k.ViewDirty) + `
-` + format(k.ViewUnpushed) + `
-` + format(k.ViewConflicts) + `
-` + format(k.SortDiff) + `
-` + format(k.SortChurn) + `
-` + format(k.Detail) + `
+`+format(k.ViewAll)+`
+`+format(k.ViewDirty)+`
+`+format(k.ViewUnpushed)+`
+`+format(k.ViewConflicts)+`
+`+format(k.SortDiff)+`
+`+format(k.SortChurn)+`
+`+format(k.Detail)+`
 
-` + format(k.Help) + `
-` + format(k.Quit)
+`+format(k.Help)+`
+`+format(k.Quit), "\n")
 }

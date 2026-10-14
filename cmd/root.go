@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jackchuka/gv/internal/config"
+	"github.com/jackchuka/gv/internal/version"
 	"github.com/jackchuka/gv/tui"
 )
 
@@ -47,6 +48,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.Version = version.Info()
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/gv/config.yaml)")
 	rootCmd.PersistentFlags().StringSliceP("scan", "s", nil, "paths to scan (overrides config file)")
 }
@@ -65,6 +68,6 @@ func initConfig() {
 
 	// Override scan paths if provided via flags
 	if scanPaths, _ := rootCmd.Flags().GetStringSlice("scan"); len(scanPaths) > 0 {
-		cfg.ScanPaths = scanPaths
+		cfg.ScanPaths = config.ExpandPaths(scanPaths)
 	}
 }

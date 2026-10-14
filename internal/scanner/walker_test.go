@@ -89,7 +89,71 @@ func TestWalker_SkipsIgnoredDirs(t *testing.T) {
 		t.Errorf("Found %d repos, want 1", len(repos))
 	}
 
-	if repos[0].Path != normal {
-		t.Errorf("Found repo at %q, want %q", repos[0].Path, normal)
+	want, _ := filepath.EvalSymlinks(normal)
+	if repos[0].Path != want {
+		t.Errorf("Found repo at %q, want %q", repos[0].Path, want)
+	}
+}
+
+func TestWalker_SymlinkedScanPath(t *testing.T) {
+	real := t.TempDir()
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(real, link); err != nil {
+		t.Fatal(err)
+	}
+	realResolved, err := filepath.EvalSymlinks(real)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// git records real paths in worktree metadata
+	code := filepath.Join(real, "code")
+	wtMeta := filepath.Join(code, "main", ".git", "worktrees", "main-wt")
+	wt := filepath.Join(code, "main-wt")
+	for _, d := range []string{wtMeta, wt} {
+		if err := os.MkdirAll(d, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitdir := filepath.Join(realResolved, "code", "main-wt", ".git") + "\n"
+	if err := os.WriteFile(filepath.Join(wtMeta, "gitdir"), []byte(gitdir), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitFile := "gitdir: " + filepath.Join(realResolved, "code", "main", ".git", "worktrees", "main-wt") + "\n"
+	if err := os.WriteFile(filepath.Join(wt, ".git"), []byte(gitFile), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	for name, scanPath := range map[string]string{
+		"symlinked parent": filepath.Join(link, "code"),
+		"symlinked root":   link,
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg := config.NewConfig()
+			cfg.ScanPaths = []string{scanPath}
+
+			repos, err := NewWalker(cfg).Scan(context.Background())
+			if err != nil {
+				t.Fatalf("Scan() error = %v", err)
+			}
+			if len(repos) != 2 {
+				var paths []string
+				for _, r := range repos {
+					paths = append(paths, r.Path)
+				}
+				t.Fatalf("Found %d repos %v, want 2", len(repos), paths)
+			}
+			var mainPath string
+			for _, r := range repos {
+				if !r.IsWorktree {
+					mainPath = r.Path
+				}
+			}
+			for _, r := range repos {
+				if r.IsWorktree && r.MainWorktree != mainPath {
+					t.Errorf("worktree MainWorktree = %q, want %q", r.MainWorktree, mainPath)
+				}
+			}
+		})
 	}
 }

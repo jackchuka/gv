@@ -192,36 +192,34 @@ func countLines(s string) int {
 	return strings.Count(s, "\n") + 1
 }
 
-// parseOwnerFromURL extracts the owner/org from a git remote URL
+// parseOwnerFromURL extracts the owner/org from a git remote URL.
 // Handles:
-//   - SSH colon format: git@github.com:owner/repo.git
-//   - SSH URL format: ssh://git@github.com/owner/repo.git
-//   - HTTPS format: https://github.com/owner/repo.git
+//   - SCP-like format: git@github.com:owner/repo.git
+//   - URL format: ssh://git@github.com/owner/repo.git, https://github.com/owner/repo.git
+//
+// Local remotes (paths and file:// URLs) have no owner and return "".
 func parseOwnerFromURL(url string) string {
-	if strings.Contains(url, "@") && strings.Contains(url, ":") && !strings.HasPrefix(url, "ssh://") {
-		parts := strings.SplitN(url, ":", 2)
-		if len(parts) == 2 && !strings.Contains(parts[0], "/") {
-			pathParts := strings.Split(parts[1], "/")
-			if len(pathParts) >= 1 {
-				return pathParts[0]
-			}
+	var path string
+	if scheme, rest, ok := strings.Cut(url, "://"); ok {
+		if scheme == "file" {
+			return ""
 		}
+		_, path, _ = strings.Cut(rest, "/")
+	} else {
+		// git treats "host:path" as SCP-like only when no slash precedes the
+		// colon; a single letter before it is a Windows drive.
+		colon := strings.Index(url, ":")
+		if colon < 2 || strings.ContainsAny(url[:colon], `/\`) {
+			return ""
+		}
+		path = url[colon+1:]
 	}
 
-	url = strings.TrimPrefix(url, "ssh://")
-	url = strings.TrimPrefix(url, "https://")
-	url = strings.TrimPrefix(url, "http://")
-
-	if idx := strings.Index(url, "@"); idx != -1 {
-		url = url[idx+1:]
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) < 2 || parts[0] == "" {
+		return ""
 	}
-
-	parts := strings.Split(url, "/")
-	if len(parts) >= 2 {
-		return parts[1]
-	}
-
-	return ""
+	return parts[0]
 }
 
 // Fetch runs git fetch and returns updated status.

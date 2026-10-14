@@ -113,6 +113,7 @@ type Model struct {
 	viewFilter  ViewFilter
 	sortMode    SortMode
 	showHelp    bool
+	helpOffset  int
 	showDetail  bool
 	cdPath      string
 

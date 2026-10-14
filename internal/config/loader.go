@@ -32,7 +32,7 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
-	cfg.ScanPaths = expandPaths(cfg.ScanPaths)
+	cfg.ScanPaths = ExpandPaths(cfg.ScanPaths)
 
 	return cfg, nil
 }
@@ -64,7 +64,7 @@ func ExpandHome(path string) string {
 	return path
 }
 
-func expandPaths(paths []string) []string {
+func ExpandPaths(paths []string) []string {
 	result := make([]string, len(paths))
 	for i, p := range paths {
 		result[i] = ExpandHome(p)
